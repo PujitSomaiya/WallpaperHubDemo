@@ -15,10 +15,7 @@ import android.text.Editable
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.GridLayoutManager
@@ -49,7 +46,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick {
+class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick, AllClickListeners.SetOnBottomDialogButtonClick {
 
     private lateinit var apiInterface: APIInterface
     private lateinit var photoResponse: PhotoResponse
@@ -61,11 +58,15 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick {
     private var searchField = ""
     private var isLoadMore = false
     private var imageFilePath: String = ""
+    private var imageType: String = "all"
+    private var orientation: String = "all"
     private var isFromEditText = false
     private lateinit var progressbar: ProgressBar
     private lateinit var edSearchBox: EditText
     private lateinit var tvNoItem: TextView
     private lateinit var imgClear: ImageView
+    private lateinit var imgFilter: ImageView
+    private lateinit var dialog: BottomDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,7 +81,7 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick {
         initViews()
         initRecyclerView()
         onClicks()
-        callApi(searchField, currentOffset, isLoadMore)
+        callApi(searchField, currentOffset, isLoadMore,imageType,orientation)
     }
 
     private fun onClicks() {
@@ -91,14 +92,14 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick {
                 currentOffset = 1
                 isLoadMore = false
                 isFromEditText = true
-                callApi(searchField, currentOffset, isLoadMore)
+                callApi(searchField, currentOffset, isLoadMore,imageType,orientation)
             } else {
                 imgClear.visibility = View.INVISIBLE
                 searchField = ""
                 currentOffset = 1
                 isLoadMore = false
                 isFromEditText = true
-                callApi(searchField, currentOffset, isLoadMore)
+                callApi(searchField, currentOffset, isLoadMore,imageType,orientation)
             }
         }
 
@@ -106,6 +107,15 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick {
             edSearchBox.clearFocus()
             edSearchBox.setText("")
             hideKeyboard(this@MainActivity)
+        }
+
+        imgFilter.setOnClickListener {
+            if (!dialog.isHidden) {
+                dialog.show(this.supportFragmentManager, "dialogFilter");
+                dialog.isCancelable = false;
+            } else {
+                dialog.dismiss();
+            }
         }
     }
 
@@ -118,7 +128,7 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick {
                 println("Load more")
                 isLoadMore = true
                 currentOffset += 1
-                callApi(searchField, currentOffset, isLoadMore)
+                callApi(searchField, currentOffset, isLoadMore,imageType,orientation)
             }
 
         }
@@ -128,6 +138,8 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick {
 
     private fun initViews() {
         apiInterface = APIClient.getClient().create(APIInterface::class.java)
+        dialog = BottomDialog(this);
+        imgFilter = findViewById(R.id.imgFilter)
         imgClear = findViewById(R.id.imgClear)
         tvNoItem = findViewById(R.id.tvNoItem)
         edSearchBox = findViewById(R.id.edSearchBox)
@@ -144,7 +156,7 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick {
         }
     }
 
-    private fun callApi(key: String, page: Int, loadMore: Boolean) {
+    private fun callApi(key: String, page: Int, loadMore: Boolean,imageType:String,orientation:String){
 
         if (!loadMore && !isFromEditText)
             ProgressDialog.showProgress(this@MainActivity)
@@ -154,8 +166,9 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick {
         val call: Call<PhotoResponse> = apiInterface.getPhotos(
                 "22823628-343c53ced661a5f7a387a4eb3",
                 key,
-                "photo",
+                imageType,
                 page,
+                orientation,
                 true
         )
 
@@ -339,5 +352,27 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick {
         val uri = Uri.fromParts("package", packageName, null)
         intent.data = uri
         startActivityForResult(intent, 101)
+    }
+
+    override fun setFilter(number: Int, rbImageType: RadioButton, rbOrientation: RadioButton) {
+
+        if (number==1){
+            searchField = edSearchBox.text.toString().trim()
+            currentOffset = 1
+            isLoadMore = false
+            isFromEditText = true
+            imageType = "all"
+            orientation = "all"
+            callApi(searchField, currentOffset, isLoadMore,imageType,orientation)
+        }else if (number==2){
+            searchField = edSearchBox.text.toString().trim()
+            currentOffset = 1
+            isLoadMore = false
+            isFromEditText = true
+            imageType = rbImageType.text.trim().toString()
+            orientation = rbOrientation.text.trim().toString()
+            callApi(searchField, currentOffset, isLoadMore,imageType,orientation)
+        }
+
     }
 }

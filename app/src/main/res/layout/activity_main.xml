@@ -32,6 +32,15 @@
             android:src="@drawable/ic__cancel"
             android:layout_marginEnd="10dp"
             />
+        <ImageView
+            android:id="@+id/imgFilter"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:visibility="visible"
+            android:padding="10sp"
+            android:src="@drawable/ic_filter_alt"
+            android:layout_marginEnd="10dp"
+            />
     </LinearLayout>
 
     <LinearLayout

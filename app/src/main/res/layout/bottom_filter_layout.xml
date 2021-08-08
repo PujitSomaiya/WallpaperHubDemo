@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:padding="15dp">
+
+    <LinearLayout
+        android:id="@+id/llBottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/btnReset"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="5dp"
+            android:layout_weight="1"
+            android:text="Reset to defaults"
+            android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_weight="1"
+            android:text="Save"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <RadioGroup
+        android:id="@+id/rgImageType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checkedButton="@id/rbAll"
+        app:layout_constraintTop_toBottomOf="@id/tvImageType">
+
+        <RadioButton
+            android:id="@+id/rbAll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="1dp"
+            android:text="All" />
+
+        <RadioButton
+            android:id="@+id/rbPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="1dp"
+            android:text="photo" />
+
+        <RadioButton
+            android:id="@+id/rbIllustration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="1dp"
+            android:text="illustration" />
+
+        <RadioButton
+            android:id="@+id/rbVector"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="1dp"
+            android:text="vector" />
+
+    </RadioGroup>
+
+    <RadioGroup
+        android:id="@+id/rgOrientation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checkedButton="@id/rbOrientationAll"
+        app:layout_constraintBottom_toTopOf="@id/llBottom"
+        app:layout_constraintTop_toBottomOf="@id/tvOrientation">
+
+        <RadioButton
+            android:id="@+id/rbOrientationAll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="1dp"
+            android:text="All" />
+
+        <RadioButton
+            android:id="@+id/rbHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="1dp"
+            android:text="horizontal" />
+
+        <RadioButton
+            android:id="@+id/rbVertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="1dp"
+            android:text="vertical" />
+
+
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/tvOrientation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="Orientation"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toBottomOf="@id/rgImageType" />
+
+    <TextView
+        android:id="@+id/tvImageType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Image Type"
+        android:textColor="@color/black"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
