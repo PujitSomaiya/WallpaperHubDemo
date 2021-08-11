@@ -63,4 +63,7 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.71828'
     //pinchimagezoom
     implementation 'com.bogdwellers:pinchtozoom:0.1'
+
+    //google admob
+    implementation 'com.google.android.gms:play-services-ads:20.2.0'
 }

@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
 import android.text.Editable
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
@@ -21,6 +22,9 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.ads.*
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.gson.Gson
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
@@ -46,7 +50,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick, AllClickListeners.SetOnBottomDialogButtonClick {
+class MainActivity : AppCompatActivity(), AllClickListeners.SetOnBottomDialogButtonClick, AllClickListeners.OnImageClick {
 
     private lateinit var apiInterface: APIInterface
     private lateinit var photoResponse: PhotoResponse
@@ -67,6 +71,13 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick, AllCli
     private lateinit var imgClear: ImageView
     private lateinit var imgFilter: ImageView
     private lateinit var dialog: BottomDialog
+    lateinit var mAdView : AdView
+    private var mInterstitialAd: InterstitialAd? = null
+    private final var TAG = "MainActivity"
+    lateinit var adRequest:AdRequest
+    private var isForDownload:Boolean = true
+    private lateinit var  item: HitsItem
+    private var mAdIsLoading: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,6 +93,28 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick, AllCli
         initRecyclerView()
         onClicks()
         callApi(searchField, currentOffset, isLoadMore,imageType,orientation)
+
+        MobileAds.initialize(this) {}
+
+        adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
+        /*loadInterAdd()*/
+        loadAd()
+        /*adView.adUnitId = "ca-app-pub-6724890135457979/9395979140"*/
+    }
+
+    private fun afterAdAndRedirect() {
+        if (isForDownload) {
+            persmissionCheckAndDownload(item)
+
+        } else {
+            val intent = Intent(this@MainActivity, FullScreenActivity::class.java)
+            intent.putExtra(
+                    "item",
+                    Gson().toJson(item)
+            )
+            startActivity(intent)
+        }
     }
 
     private fun onClicks() {
@@ -121,7 +154,7 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick, AllCli
 
     private fun initRecyclerView() {
         imageAdapter = ImageAdapter(this, this)
-        gridLayoutManager = GridLayoutManager(this, 4, LinearLayoutManager.VERTICAL, false)
+        gridLayoutManager = GridLayoutManager(this, 3, LinearLayoutManager.VERTICAL, false)
         rvHome.layoutManager = gridLayoutManager
         scrollListener = object : EndlessRecyclerViewScrollListener(gridLayoutManager) {
             override fun onLoadMore(page: Int, totalItemsCount: Int, view: RecyclerView?) {
@@ -145,6 +178,7 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick, AllCli
         edSearchBox = findViewById(R.id.edSearchBox)
         progressbar = findViewById(R.id.progressbar)
         rvHome = findViewById(R.id.rvHome)
+        mAdView = findViewById(R.id.adView)
     }
 
     private fun hideKeyboard(context: Activity) {
@@ -216,7 +250,8 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick, AllCli
 
 
     override fun onImageClick(position: Int, item: HitsItem?) {
-        dialogForDownload(position, item!!)
+        this.item=item!!
+        dialogForDownload(position, item)
     }
 
     private fun dialogForDownload(position: Int, item: HitsItem) {
@@ -228,20 +263,34 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick, AllCli
                     .setCancelable(false)
                     .setPositiveButton("Download"
                     ) { dialog, which ->
-                        persmissionCheckAndDownload(item)
+                        isForDownload =true
+                        showInterstitial()
+                        /*if (!mAdIsLoading && mInterstitialAd == null) {
+                            mAdIsLoading = true
+                            loadAd()
+                        }*/
+
                     }
                     .setNegativeButton("No"
                     ) { dialog, which -> }
                     .setNeutralButton("View"
                     ) { dialog, which ->
-                        val intent = Intent(this, FullScreenActivity::class.java)
-                        intent.putExtra(
-                            "item",
-                            Gson().toJson(item)
-                        )
-                        startActivity(intent)
+                        isForDownload = false
+                        showInterstitial()
+                        /*if (!mAdIsLoading && mInterstitialAd == null) {
+                            mAdIsLoading = true
+                            loadAd()
+                        }*/
 
                     }.create().show()
+        }
+    }
+
+    private fun showInterstitialAdd() {
+        if (mInterstitialAd != null) {
+            mInterstitialAd?.show(this@MainActivity)
+        } else {
+            Log.d(TAG, "The interstitial ad wasn't ready yet.")
         }
     }
 
@@ -374,5 +423,65 @@ class MainActivity : AppCompatActivity(), AllClickListeners.OnImageClick, AllCli
             callApi(searchField, currentOffset, isLoadMore,imageType,orientation)
         }
 
+    }
+    
+
+    private fun showInterstitial() {
+        if (mInterstitialAd != null) {
+            mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    Log.d(TAG, "Ad was dismissed.")
+                    // Don't forget to set the ad reference to null so you
+                    // don't show the ad a second time.
+                    mInterstitialAd = null
+                    loadAd()
+                    afterAdAndRedirect()
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
+                    Log.d(TAG, "Ad failed to show.")
+                    // Don't forget to set the ad reference to null so you
+                    // don't show the ad a second time.
+                    mInterstitialAd = null
+                }
+
+                override fun onAdShowedFullScreenContent() {
+                    Log.d(TAG, "Ad showed fullscreen content.")
+                    // Called when ad is dismissed.
+                }
+            }
+            mInterstitialAd?.show(this)
+        } else {
+            loadAd()
+            Toast.makeText(this, "Ad wasn't loaded.", Toast.LENGTH_SHORT).show()
+            afterAdAndRedirect()
+        }
+    }
+
+    private fun loadAd() {
+        InterstitialAd.load(
+                this, "ca-app-pub-3940256099942544/1033173712", adRequest,
+                object : InterstitialAdLoadCallback() {
+                    override fun onAdFailedToLoad(adError: LoadAdError) {
+                        Log.d(TAG, adError?.message)
+                        mInterstitialAd = null
+                        mAdIsLoading = false
+                        val error = "domain: ${adError.domain}, code: ${adError.code}, " +
+                                "message: ${adError.message}"
+                        Toast.makeText(
+                                this@MainActivity,
+                                "onAdFailedToLoad() with error $error",
+                                Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                        Log.d(TAG, "Ad was loaded.")
+                        mInterstitialAd = interstitialAd
+                        mAdIsLoading = false
+                        Toast.makeText(this@MainActivity, "onAdLoaded()", Toast.LENGTH_SHORT).show()
+                    }
+                }
+        )
     }
 }

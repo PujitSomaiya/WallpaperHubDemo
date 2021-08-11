@@ -75,6 +75,7 @@ public class ImageAdapter  extends RecyclerView.Adapter<ImageAdapter.ViewHolder>
         _dataSource.addAll(list);
         notifyDataSetChanged();
     }
+
     public void add(List<HitsItem> list) {
         if (list == null) return;
         _dataSource.addAll(list);
